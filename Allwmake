@@ -5,16 +5,16 @@ cd ${0%/*} || exit 1    # Run from this directory
 . wmake/scripts/AllwmakeParseArguments
 
 # Perform various checks
-wmakeCheckPwd "$WM_PROJECT_DIR" || {
-    echo "Allwmake error: Current directory is not \$WM_PROJECT_DIR"
+wmakeCheckPwd "$SIMULI_PROJECT_DIR" || {
+    echo "Allwmake error: Current directory is not \$SIMULI_PROJECT_DIR"
     echo "    The environment variables are inconsistent with the installation."
-    echo "    Check the OpenFOAM entries in your dot-files and source them."
+    echo "    Check the Simuli entries in your dot-files and source them."
     exit 1
 }
 
-[ -n "$FOAM_EXT_LIBBIN" ] || {
-    echo "Allwmake error: FOAM_EXT_LIBBIN not set"
-    echo "    Check the OpenFOAM entries in your dot-files and source them."
+[ -n "$SIMULI_EXT_LIBBIN" ] || {
+    echo "Allwmake error: SIMULI_EXT_LIBBIN not set"
+    echo "    Check the Simuli entries in your dot-files and source them."
     exit 1
 }
 
@@ -22,18 +22,15 @@ wmakeCheckPwd "$WM_PROJECT_DIR" || {
 (cd wmake/src && make)
 
 # Compile ThirdParty libraries and applications
-if [ -d "$WM_THIRD_PARTY_DIR" ]
+if [ -d "$SIMULI_THIRD_PARTY_DIR" ]
 then
-    $WM_THIRD_PARTY_DIR/Allwmake
+    $SIMULI_THIRD_PARTY_DIR/Allwmake
 else
     echo "Allwmake: no ThirdParty directory found - skipping"
 fi
 
-# Compile OpenFOAM libraries and applications
+# Compile Simuli libraries and applications
 src/Allwmake $targetType $*
 
-# Compile OpenFOAM libraries and applications
+# Compile Simuli applications
 applications/Allwmake $targetType $*
-
-
-#------------------------------------------------------------------------------
