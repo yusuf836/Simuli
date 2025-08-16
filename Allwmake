@@ -1,36 +1,75 @@
 #!/bin/sh
-cd ${0%/*} || exit 1    # Run from this directory
+# Simuli Allwmake Build Script
+# Builds all Simuli libraries and applications
+# Author: Simuli Team
+# Date: 2025-08-16
+
+cd "${0%/*}" || {
+    echo "Error: Failed to change to script directory."
+    exit 1
+}
 
 # Parse arguments for library compilation
 . wmake/scripts/AllwmakeParseArguments
 
-# Perform various checks
+# Verbose mode
+VERBOSE=0
+for arg in "$@"; do
+    [ "$arg" = "--verbose" ] && VERBOSE=1
+done
+
+log() {
+    [ $VERBOSE -eq 1 ] && echo "[INFO] $1"
+}
+
+error() {
+    echo "[ERROR] $1" >&2
+}
+
+# Check project directory
 wmakeCheckPwd "$SIMULI_PROJECT_DIR" || {
-    echo "Allwmake error: Current directory is not \$SIMULI_PROJECT_DIR"
-    echo "    The environment variables are inconsistent with the installation."
-    echo "    Check the Simuli entries in your dot-files and source them."
+    error "Current directory is not \$SIMULI_PROJECT_DIR"
+    echo "Check your Simuli environment variables in dot-files and source them."
     exit 1
 }
 
+# Check external library directory
 [ -n "$SIMULI_EXT_LIBBIN" ] || {
-    echo "Allwmake error: SIMULI_EXT_LIBBIN not set"
-    echo "    Check the Simuli entries in your dot-files and source them."
+    error "SIMULI_EXT_LIBBIN not set"
+    echo "Check your Simuli environment variables in dot-files and source them."
     exit 1
 }
 
 # Compile wmake support applications
-(cd wmake/src && make)
+log "Compiling wmake support applications..."
+(cd wmake/src && make) || {
+    error "Failed to compile wmake support applications."
+    exit 1
+}
 
 # Compile ThirdParty libraries and applications
-if [ -d "$SIMULI_THIRD_PARTY_DIR" ]
-then
-    $SIMULI_THIRD_PARTY_DIR/Allwmake
+if [ -d "$SIMULI_THIRD_PARTY_DIR" ]; then
+    log "Compiling ThirdParty libraries and applications..."
+    $SIMULI_THIRD_PARTY_DIR/Allwmake || {
+        error "Failed to compile ThirdParty libraries."
+        exit 1
+    }
 else
-    echo "Allwmake: no ThirdParty directory found - skipping"
+    log "No ThirdParty directory found - skipping."
 fi
 
-# Compile Simuli libraries and applications
-src/Allwmake $targetType $*
+# Compile Simuli core libraries
+log "Compiling Simuli core libraries..."
+src/Allwmake $targetType "$@" || {
+    error "Failed to compile Simuli core libraries."
+    exit 1
+}
 
 # Compile Simuli applications
-applications/Allwmake $targetType $*
+log "Compiling Simuli applications..."
+applications/Allwmake $targetType "$@" || {
+    error "Failed to compile Simuli applications."
+    exit 1
+}
+
+log "Simuli build completed successfully!"
